@@ -1,18 +1,13 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 
 export default function PlayPage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeTab, setActiveTab] = useState('play');
-  const [mounted, setMounted] = useState(false);
-  const [isProUser, setIsProUser] = useState(false); // For demo purposes
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [isProUser, setIsProUser] = useState(false);
 
   const categories = [
     { id: 'all', label: 'All', icon: '🔎' },
@@ -140,24 +135,10 @@ export default function PlayPage() {
 
   const handleCategoryClick = (categoryId: string) => {
     if (categoryId === 'host') {
-      // Handle host game action
       return;
     }
     setActiveCategory(categoryId);
   };
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 pb-20">
-        <div className="animate-pulse">
-          <div className="bg-white/10 backdrop-blur-sm px-4 py-6">
-            <div className="h-6 bg-white/20 rounded mb-2"></div>
-            <div className="h-4 bg-white/20 rounded w-1/2"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 pb-20">

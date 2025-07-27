@@ -4,12 +4,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { auth } from '../../src/firebase'; // Adjust the import path as necessary
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 export default function LoginPage() {
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const router = useRouter();
 
   const handleSendOTP = async () => {
@@ -33,6 +36,41 @@ export default function LoginPage() {
     }, 1500);
   };
 
+  const handleGoogleLogin = async () => {
+  setIsGoogleLoading(true);
+  const provider = new GoogleAuthProvider();
+
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    const token = await user.getIdToken();
+
+    // ✅ Call FastAPI backend to register/login user
+    const res = await fetch("http://localhost:8000/users/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        uid: user.uid,
+        name: user.displayName,
+        phone: user.phoneNumber || ""
+      })
+    });
+
+    const data = await res.json();
+    console.log("Login successful:", data);
+    router.push("/dashboard");
+
+  } catch (error) {
+    console.error("Google login error:", error);
+    alert("Google login failed");
+  } finally {
+    setIsGoogleLoading(false);
+  }
+};
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -49,6 +87,35 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl p-6 shadow-xl">
           {step === 'phone' ? (
             <div className="space-y-6">
+              {/* Google Login Button */}
+              <button
+                onClick={handleGoogleLogin}
+                disabled={isGoogleLoading}
+                className="w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {isGoogleLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Signing in...
+                  </div>
+                ) : (
+                  <>
+                    <i className="ri-google-fill text-red-500 text-xl"></i>
+                    Continue with Google
+                  </>
+                )}
+              </button>
+
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">OR</span>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-gray-700 text-sm font-medium mb-2">
                   Phone Number
